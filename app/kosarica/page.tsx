@@ -1,0 +1,104 @@
+'use client';
+
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { useCart } from '@/components/cart';
+
+export default function CartPage() {
+  const { items, total, setQuantity, removeItem, clear } = useCart();
+
+  return (
+    <main className="mx-auto w-full max-w-3xl px-4 py-10">
+      <h1 className="mb-6 text-3xl font-bold">Košarica</h1>
+
+      {items.length === 0 ? (
+        <div className="flex flex-col items-start gap-4">
+          <p className="text-muted-foreground">Košarica je prazna.</p>
+          <Button asChild>
+            <Link href="/">Pogledaj proizvode</Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {items.map((item) => (
+            <Card
+              key={`${item.id}-${item.size ?? ''}`}
+              className="flex flex-row items-center gap-4 p-3"
+            >
+              <div className="bg-muted h-16 w-16 shrink-0 overflow-hidden rounded">
+                {item.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="h-full w-full object-cover"
+                  />
+                )}
+              </div>
+
+              <div className="min-w-0 grow">
+                <Link
+                  href={`/proizvodi/${item.id}`}
+                  className="truncate font-medium hover:underline"
+                >
+                  {item.name}
+                </Link>
+                <p className="text-muted-foreground text-sm">
+                  {item.price} €{item.size && ` · veličina ${item.size}`}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Smanji količinu"
+                  onClick={() =>
+                    setQuantity(item.id, item.size, item.quantity - 1)
+                  }
+                >
+                  −
+                </Button>
+                <span className="w-8 text-center tabular-nums">
+                  {item.quantity}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Povećaj količinu"
+                  onClick={() =>
+                    setQuantity(item.id, item.size, item.quantity + 1)
+                  }
+                >
+                  +
+                </Button>
+              </div>
+
+              <span className="w-20 text-right font-medium tabular-nums">
+                {(item.price * item.quantity).toFixed(2)} €
+              </span>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeItem(item.id, item.size)}
+              >
+                Ukloni
+              </Button>
+            </Card>
+          ))}
+
+          <div className="flex items-center justify-between border-t pt-4">
+            <Button variant="ghost" size="sm" onClick={clear}>
+              Isprazni košaricu
+            </Button>
+            <p className="text-lg font-bold">
+              Ukupno: {total.toFixed(2)} €
+            </p>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}

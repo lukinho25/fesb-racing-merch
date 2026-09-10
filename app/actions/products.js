@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { connectDB } from '@/lib/mongodb';
 import { requireAdmin } from '@/lib/auth';
-import { saveImage } from '@/lib/upload';
+import { deleteImage, saveImage } from '@/lib/upload';
 import Product from '@/models/Product';
 
 function parseSizes(value) {
@@ -87,6 +87,7 @@ export async function updateProduct(_prevState, formData) {
 
   revalidatePath('/');
   revalidatePath('/admin');
+  revalidatePath(`/proizvodi/${id}`);
   return { success: `Proizvod "${data.name}" je ažuriran.` };
 }
 
@@ -97,7 +98,8 @@ export async function deleteProduct(formData) {
   if (!id) return;
 
   await connectDB();
-  await Product.findByIdAndDelete(id);
+  const deleted = await Product.findByIdAndDelete(id);
+  await deleteImage(deleted?.image);
 
   revalidatePath('/');
   revalidatePath('/admin');
