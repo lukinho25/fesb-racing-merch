@@ -1,10 +1,8 @@
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { connectDB } from '@/lib/mongodb';
-import { isAdmin } from '@/lib/auth';
 import Product from '@/models/Product';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -16,18 +14,10 @@ import {
 export default async function Home() {
   await connectDB();
   const products = await Product.find({}).sort({ createdAt: -1 }).lean();
-  const admin = await isAdmin();
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Proizvodi</h1>
-        {admin && (
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin">Administracija</Link>
-          </Button>
-        )}
-      </div>
+      <h1 className="mb-8 text-3xl font-bold">Proizvodi</h1>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
         {products.map((product) => (
