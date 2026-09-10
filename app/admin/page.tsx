@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
 import { createProduct, deleteProduct } from '@/app/actions/products';
 import { logout } from '@/app/actions/auth';
+import { storageStatus } from '@/lib/upload';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +19,7 @@ export default async function AdminPage() {
 
   await connectDB();
   const products = await Product.find({}).sort({ createdAt: -1 }).lean();
+  const storage = storageStatus();
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-10">
@@ -38,6 +40,23 @@ export default async function AdminPage() {
       <Card className="mb-10">
         <CardHeader>
           <CardTitle>Novi proizvod</CardTitle>
+          <p className="text-muted-foreground text-sm">
+            Spremište slika:{' '}
+            {storage.mode === 'blob' && (
+              <span className="text-emerald-600">
+                Vercel Blob ({storage.detail})
+              </span>
+            )}
+            {storage.mode === 'local' && (
+              <span>lokalni disk ({storage.detail})</span>
+            )}
+            {storage.mode === 'none' && (
+              <span className="text-destructive">
+                nije podešeno ({storage.detail}) — upload datoteke neće raditi,
+                koristi polje &quot;adresa slike&quot;
+              </span>
+            )}
+          </p>
         </CardHeader>
         <CardContent>
           <ProductForm action={createProduct} submitLabel="Dodaj proizvod" />
