@@ -3,6 +3,15 @@ import Link from 'next/link';
 import { connectDB } from '@/lib/mongodb';
 import { isAdmin } from '@/lib/auth';
 import Product from '@/models/Product';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export default async function Home() {
   await connectDB();
@@ -10,39 +19,65 @@ export default async function Home() {
   const admin = await isAdmin();
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-10">
-      <div className="flex items-center justify-between mb-8">
+    <main className="mx-auto w-full max-w-6xl px-4 py-10">
+      <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-bold">FESB Racing Merch</h1>
-        <Link href={admin ? '/admin' : '/login'} className="text-sm underline">
-          {admin ? 'Administracija' : 'Prijava'}
-        </Link>
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={admin ? '/admin' : '/login'}>
+            {admin ? 'Administracija' : 'Prijava'}
+          </Link>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
         {products.map((product) => (
-          <div key={String(product._id)} className="border rounded-lg p-4 shadow-sm">
-            <div className="bg-gray-100 h-40 rounded mb-3 flex items-center justify-center text-gray-400 overflow-hidden">
+          <Card key={String(product._id)} className="overflow-hidden pt-0">
+            <div className="bg-muted text-muted-foreground flex h-48 items-center justify-center overflow-hidden">
               {product.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={product.image} alt={product.name} className="h-full object-cover" />
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                'Nema slike'
+                <span className="text-sm">Nema slike</span>
               )}
             </div>
-            <h2 className="font-semibold text-lg">{product.name}</h2>
-            <p className="text-gray-500 text-sm mb-2">{product.description}</p>
-            {product.sizes?.length > 0 && (
-              <p className="text-gray-500 text-xs mb-2">
-                Veličine: {product.sizes.join(', ')}
-              </p>
-            )}
-            <p className="font-bold">{product.price} €</p>
-          </div>
+
+            <CardHeader>
+              <CardTitle>{product.name}</CardTitle>
+            </CardHeader>
+
+            <CardContent className="flex flex-col gap-2">
+              {product.description && (
+                <p className="text-muted-foreground text-sm">
+                  {product.description}
+                </p>
+              )}
+              {product.sizes?.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {product.sizes.map((size: string) => (
+                    <Badge key={size} variant="outline">
+                      {size}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+
+            <CardFooter className="justify-between">
+              <span className="font-bold">{product.price} €</span>
+              {product.stock === 0 && (
+                <Badge variant="secondary">Rasprodano</Badge>
+              )}
+            </CardFooter>
+          </Card>
         ))}
       </div>
 
       {products.length === 0 && (
-        <p className="text-gray-400">Trenutno nema proizvoda.</p>
+        <p className="text-muted-foreground">Trenutno nema proizvoda.</p>
       )}
     </main>
   );

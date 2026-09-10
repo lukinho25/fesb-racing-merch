@@ -4,6 +4,9 @@ import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
 import { createProduct, deleteProduct } from '@/app/actions/products';
 import { logout } from '@/app/actions/auth';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductForm from './product-form';
 
 export const metadata = {
@@ -17,41 +20,42 @@ export default async function AdminPage() {
   const products = await Product.find({}).sort({ createdAt: -1 }).lean();
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10">
-      <div className="flex items-center justify-between mb-8">
+    <main className="mx-auto w-full max-w-4xl px-4 py-10">
+      <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Administracija</h1>
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-sm underline">
-            Pogledaj trgovinu
-          </Link>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/">Pogledaj trgovinu</Link>
+          </Button>
           <form action={logout}>
-            <button type="submit" className="text-sm underline">
+            <Button variant="outline" size="sm" type="submit">
               Odjava
-            </button>
+            </Button>
           </form>
         </div>
       </div>
 
-      <section className="border rounded-lg p-6 mb-10">
-        <h2 className="text-xl font-semibold mb-4">Novi proizvod</h2>
-        <ProductForm action={createProduct} submitLabel="Dodaj proizvod" />
-      </section>
+      <Card className="mb-10">
+        <CardHeader>
+          <CardTitle>Novi proizvod</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProductForm action={createProduct} submitLabel="Dodaj proizvod" />
+        </CardContent>
+      </Card>
 
-      <section>
-        <h2 className="text-xl font-semibold mb-4">
-          Proizvodi ({products.length})
-        </h2>
+      <h2 className="mb-4 text-xl font-semibold">
+        Proizvodi ({products.length})
+      </h2>
 
-        {products.length === 0 ? (
-          <p className="text-gray-500">Još nema proizvoda.</p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {products.map((product) => (
-              <li
-                key={String(product._id)}
-                className="border rounded-lg p-3 flex items-center gap-4"
-              >
-                <div className="h-14 w-14 shrink-0 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+      {products.length === 0 ? (
+        <p className="text-muted-foreground">Još nema proizvoda.</p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {products.map((product) => (
+            <li key={String(product._id)}>
+              <Card className="flex flex-row items-center gap-4 p-3">
+                <div className="bg-muted flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded">
                   {product.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -60,36 +64,43 @@ export default async function AdminPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="text-[10px] text-gray-400">nema</span>
+                    <span className="text-muted-foreground text-[10px]">
+                      nema
+                    </span>
                   )}
                 </div>
 
-                <div className="grow min-w-0">
-                  <p className="font-medium truncate">{product.name}</p>
-                  <p className="text-sm text-gray-500">
+                <div className="min-w-0 grow">
+                  <p className="truncate font-medium">{product.name}</p>
+                  <p className="text-muted-foreground text-sm">
                     {product.price} € · zaliha {product.stock}
-                    {product.sizes?.length > 0 && ` · ${product.sizes.join(', ')}`}
                   </p>
+                  {product.sizes?.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {product.sizes.map((size: string) => (
+                        <Badge key={size} variant="secondary">
+                          {size}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <Link
-                  href={`/admin/${String(product._id)}`}
-                  className="text-sm underline shrink-0"
-                >
-                  Uredi
-                </Link>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/admin/${String(product._id)}`}>Uredi</Link>
+                </Button>
 
-                <form action={deleteProduct} className="shrink-0">
+                <form action={deleteProduct}>
                   <input type="hidden" name="id" value={String(product._id)} />
-                  <button type="submit" className="text-sm text-red-600 underline">
+                  <Button variant="destructive" size="sm" type="submit">
                     Obriši
-                  </button>
+                  </Button>
                 </form>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+              </Card>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }

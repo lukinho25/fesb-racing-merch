@@ -1,5 +1,12 @@
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/auth';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import LoginForm from './login-form';
 
 export const metadata = {
@@ -12,12 +19,18 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="max-w-sm mx-auto px-4 py-20">
-      <h1 className="text-2xl font-bold mb-2">Administrator</h1>
-      <p className="text-sm text-gray-500 mb-6">
-        Prijavi se za uređivanje ponude proizvoda.
-      </p>
-      <LoginForm />
+    <main className="mx-auto w-full max-w-sm px-4 py-20">
+      <Card>
+        <CardHeader>
+          <CardTitle>Administrator</CardTitle>
+          <CardDescription>
+            Prijavi se za uređivanje ponude proizvoda.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LoginForm />
+        </CardContent>
+      </Card>
     </main>
   );
 }

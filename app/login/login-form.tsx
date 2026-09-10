@@ -2,33 +2,33 @@
 
 import { useActionState } from 'react';
 import { login } from '@/app/actions/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function LoginForm() {
   const [state, action, pending] = useActionState(login, undefined);
 
   return (
-    <form action={action} className="flex flex-col gap-3">
-      <label htmlFor="password" className="text-sm font-medium">
-        Lozinka
-      </label>
-      <input
-        id="password"
-        name="password"
-        type="password"
-        autoComplete="current-password"
-        required
-        className="border rounded px-3 py-2"
-      />
+    <form action={action} className="flex flex-col gap-4">
+      <div className="grid gap-2">
+        <Label htmlFor="password">Lozinka</Label>
+        <Input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+        />
+      </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && (
+        <p className="text-sm text-destructive">{state.error}</p>
+      )}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="bg-black text-white rounded px-4 py-2 disabled:opacity-50"
-      >
+      <Button type="submit" disabled={pending}>
         {pending ? 'Prijava...' : 'Prijavi se'}
-      </button>
+      </Button>
     </form>
   );
 }

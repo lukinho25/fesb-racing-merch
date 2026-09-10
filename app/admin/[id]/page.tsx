@@ -4,6 +4,8 @@ import { requireAdmin } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
 import { updateProduct } from '@/app/actions/products';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductForm from '../product-form';
 
 export const metadata = {
@@ -19,30 +21,38 @@ export default async function EditProductPage({
   const { id } = await params;
 
   await connectDB();
-  const product = await Product.findById(id).lean().catch(() => null);
+  const product = await Product.findById(id)
+    .lean()
+    .catch(() => null);
   if (!product) notFound();
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-10">
-      <Link href="/admin" className="text-sm underline">
-        ← Natrag na administraciju
-      </Link>
-      <h1 className="text-2xl font-bold mt-4 mb-6">Uredi proizvod</h1>
+    <main className="mx-auto w-full max-w-2xl px-4 py-10">
+      <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
+        <Link href="/admin">← Natrag na administraciju</Link>
+      </Button>
 
-      <ProductForm
-        action={updateProduct}
-        submitLabel="Spremi izmjene"
-        product={{
-          _id: String(product._id),
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          image: product.image,
-          sizes: product.sizes,
-          category: product.category,
-          stock: product.stock,
-        }}
-      />
+      <Card>
+        <CardHeader>
+          <CardTitle>Uredi proizvod</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProductForm
+            action={updateProduct}
+            submitLabel="Spremi izmjene"
+            product={{
+              _id: String(product._id),
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              image: product.image,
+              sizes: product.sizes,
+              category: product.category,
+              stock: product.stock,
+            }}
+          />
+        </CardContent>
+      </Card>
     </main>
   );
 }
