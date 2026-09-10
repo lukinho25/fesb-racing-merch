@@ -10,7 +10,10 @@ export default function CartPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-bold">Košarica</h1>
+      <div className="mb-6 flex items-center gap-3">
+        <span className="bg-brand h-6 w-1.5 rounded-full" aria-hidden />
+        <h1 className="text-3xl font-bold">Košarica</h1>
+      </div>
 
       {items.length === 0 ? (
         <div className="flex flex-col items-start gap-4">
@@ -96,7 +99,9 @@ export default function CartPage() {
             <Button variant="ghost" size="sm" onClick={clear}>
               Isprazni košaricu
             </Button>
-            <p className="text-lg font-bold">Ukupno: {total.toFixed(2)} €</p>
+            <p className="text-lg font-bold">
+              Ukupno: <span className="text-brand">{total.toFixed(2)} €</span>
+            </p>
           </div>
 
           <Button asChild className="self-end">

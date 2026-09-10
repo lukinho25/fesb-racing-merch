@@ -70,7 +70,8 @@ export default async function ProductPage({
               </span>
             )}
             <h1 className="text-3xl font-bold">{product.name}</h1>
-            <p className="text-2xl font-semibold">{product.price} €</p>
+            <div className="brand-rule h-1 w-16 rounded-full" aria-hidden />
+            <p className="text-brand text-3xl font-bold">{product.price} €</p>
             {product.stock > 0 ? (
               <Badge variant="secondary" className="w-fit">
                 Na zalihi: {product.stock}

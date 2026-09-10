@@ -30,7 +30,7 @@ export default function CartSummary() {
         ))}
         <div className="flex justify-between border-t pt-2 font-bold">
           <span>Ukupno</span>
-          <span className="tabular-nums">{total.toFixed(2)} €</span>
+          <span className="text-brand tabular-nums">{total.toFixed(2)} €</span>
         </div>
       </CardContent>
     </Card>

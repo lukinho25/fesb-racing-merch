@@ -2,9 +2,22 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:not(.light *)) {
+      @slot;
+    }
+  }
+}
 
 @theme inline {
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-foreground: var(--brand-foreground);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -55,8 +68,8 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -66,13 +79,19 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: var(--brand);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
+
+  /* Sluzbena boja FESB Racinga i crvena s logotipa. */
+  --brand: #7f1617;
+  --brand-dark: #5a0f10;
+  --brand-accent: #e10600;
+  --brand-foreground: #ffffff;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -84,14 +103,16 @@
 }
 
 .dark {
+  --brand: #a51e20;
+  --brand-dark: #7f1617;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -101,7 +122,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: var(--brand-accent);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -117,6 +138,45 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Ista paleta kad je sustav u tamnom nacinu, bez rucnog prebacivanja. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+  --brand: #a51e20;
+  --brand-dark: #7f1617;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: var(--brand-accent);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -127,4 +187,47 @@
   html {
     @apply font-sans;
   }
+}
+/* --- Uzorci marke ------------------------------------------------------- */
+
+/* Dijagonalne trkacke pruge - podloga za istaknute dijelove stranice. */
+.brand-stripes {
+  background-image: repeating-linear-gradient(
+    115deg,
+    color-mix(in srgb, var(--brand-accent) 14%, transparent) 0 2px,
+    transparent 2px 14px
+  );
+}
+
+/* Karo zastavica - tanka traka na rubu sekcije. Ima vlastitu tamnu
+   podlogu pa se jednako vidi u svijetloj i tamnoj temi. */
+.brand-checker {
+  background-color: var(--brand-dark);
+  background-image: conic-gradient(
+    #ffffff 25%,
+    transparent 0 50%,
+    #ffffff 0 75%,
+    transparent 0
+  );
+  background-size: 8px 8px;
+}
+
+/* Potez boje ispod headera: od boje tima prema crvenoj s logotipa. */
+.brand-rule {
+  background-image: linear-gradient(
+    90deg,
+    var(--brand-dark) 0%,
+    var(--brand) 45%,
+    var(--brand-accent) 100%
+  );
+}
+
+/* Tamna podloga s blagim odsjajem, za header i footer. */
+.brand-surface {
+  background-color: #0b0b0c;
+  background-image: radial-gradient(
+    120% 140% at 12% 0%,
+    color-mix(in srgb, var(--brand) 45%, transparent) 0%,
+    transparent 60%
+  );
 }

@@ -9,7 +9,10 @@ export const metadata = {
 export default function CheckoutPage() {
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-bold">Narudžba</h1>
+      <div className="mb-6 flex items-center gap-3">
+        <span className="bg-brand h-6 w-1.5 rounded-full" aria-hidden />
+        <h1 className="text-3xl font-bold">Narudžba</h1>
+      </div>
 
       <div className="flex flex-col gap-6">
         <CartSummary />
