@@ -34,8 +34,7 @@ export default async function Home() {
           </h1>
           <div className="brand-rule mt-5 h-1 w-24 rounded-full" aria-hidden />
           <p className="mt-3 max-w-xl text-white/70">
-            Službeni merch FESB Racing tima. Odaberi veličinu, pošalji narudžbu,
-            a za plaćanje i preuzimanje dogovorimo se osobno.
+            Službeni merch FESB Racing tima.
           </p>
         </div>
       </section>
