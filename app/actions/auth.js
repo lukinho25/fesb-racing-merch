@@ -10,11 +10,18 @@ export async function login(_prevState, formData) {
     return { error: 'Unesi lozinku.' };
   }
 
-  if (!checkAdminPassword(password)) {
-    return { error: 'Pogrešna lozinka.' };
+  try {
+    if (!checkAdminPassword(password)) {
+      return { error: 'Pogrešna lozinka.' };
+    }
+    await createSession();
+  } catch (err) {
+    // Npr. varijable okoline nisu postavljene na serveru - pokaži poruku
+    // umjesto da cijela stranica padne na 500.
+    console.error('Prijava nije uspjela:', err);
+    return { error: err.message ?? 'Prijava trenutno nije moguća.' };
   }
 
-  await createSession();
   redirect('/admin');
 }
 
