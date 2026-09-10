@@ -10,18 +10,25 @@ import { useCart, type CartItem } from '@/components/cart';
 export default function AddToCart({
   product,
   sizes,
-  inStock,
+  stock,
 }: {
-  product: Omit<CartItem, 'quantity' | 'size'>;
+  product: Omit<CartItem, 'quantity' | 'size' | 'stock'>;
   sizes: string[];
-  inStock: boolean;
+  stock: number;
 }) {
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   const [size, setSize] = useState<string | undefined>(sizes[0]);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
 
-  if (!inStock) {
+  // Vec u kosarici za ovu velicinu - vise od zalihe ne pustamo ni zbrojeno.
+  const inCart =
+    items.find(
+      (line) => line.id === product.id && (line.size ?? '') === (size ?? '')
+    )?.quantity ?? 0;
+  const remaining = Math.max(0, stock - inCart);
+
+  if (stock <= 0) {
     return (
       <p className="text-muted-foreground text-sm">
         Proizvod trenutno nije na zalihi.
@@ -57,9 +64,12 @@ export default function AddToCart({
           id="quantity"
           type="number"
           min={1}
+          max={stock}
           value={quantity}
           onChange={(event) =>
-            setQuantity(Math.max(1, Number(event.target.value) || 1))
+            setQuantity(
+              Math.min(stock, Math.max(1, Number(event.target.value) || 1))
+            )
           }
         />
       </div>
@@ -67,17 +77,24 @@ export default function AddToCart({
       <div className="flex items-center gap-3">
         <Button
           type="button"
+          disabled={remaining === 0}
           onClick={() => {
-            addItem({ ...product, size }, quantity);
+            addItem({ ...product, size, stock }, Math.min(quantity, remaining));
             setAdded(true);
           }}
         >
           Dodaj u košaricu
         </Button>
-        {added && (
-          <Link href="/kosarica" className="text-sm underline">
-            Dodano — otvori košaricu
-          </Link>
+        {remaining === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            Sve dostupne komade već imaš u košarici.
+          </p>
+        ) : (
+          added && (
+            <Link href="/kosarica" className="text-sm underline">
+              Dodano — otvori košaricu
+            </Link>
+          )
         )}
       </div>
     </div>

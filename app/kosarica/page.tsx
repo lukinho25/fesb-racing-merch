@@ -67,6 +67,9 @@ export default function CartPage() {
                   variant="outline"
                   size="icon"
                   aria-label="Povećaj količinu"
+                  disabled={
+                    item.stock !== undefined && item.quantity >= item.stock
+                  }
                   onClick={() =>
                     setQuantity(item.id, item.size, item.quantity + 1)
                   }
@@ -93,10 +96,12 @@ export default function CartPage() {
             <Button variant="ghost" size="sm" onClick={clear}>
               Isprazni košaricu
             </Button>
-            <p className="text-lg font-bold">
-              Ukupno: {total.toFixed(2)} €
-            </p>
+            <p className="text-lg font-bold">Ukupno: {total.toFixed(2)} €</p>
           </div>
+
+          <Button asChild className="self-end">
+            <Link href="/blagajna">Nastavi na narudžbu</Link>
+          </Button>
         </div>
       )}
     </main>

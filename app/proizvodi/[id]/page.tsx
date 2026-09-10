@@ -96,7 +96,7 @@ export default async function ProductPage({
               image: product.image,
             }}
             sizes={sizes}
-            inStock={product.stock > 0}
+            stock={product.stock}
           />
         </div>
       </div>

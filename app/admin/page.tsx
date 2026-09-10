@@ -27,6 +27,9 @@ export default async function AdminPage() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="/">Pogledaj trgovinu</Link>
           </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/admin/narudzbe">Narudžbe</Link>
+          </Button>
           <form action={logout}>
             <Button variant="outline" size="sm" type="submit">
               Odjava
