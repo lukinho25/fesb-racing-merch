@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
 import AddToCart from '@/components/add-to-cart';
+import ProductGallery from '@/components/product-gallery';
+import { productImages } from '@/lib/products';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -41,6 +43,7 @@ export default async function ProductPage({
   if (!product) notFound();
 
   const sizes: string[] = product.sizes ?? [];
+  const images = productImages(product);
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10">
@@ -49,18 +52,7 @@ export default async function ProductPage({
       </Button>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-        <div className="bg-muted text-muted-foreground flex aspect-square items-center justify-center overflow-hidden rounded-lg border">
-          {product.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={product.image}
-              alt={product.name}
-              className="h-full w-full object-contain"
-            />
-          ) : (
-            <span className="text-sm">Nema slike</span>
-          )}
-        </div>
+        <ProductGallery images={images} name={product.name} />
 
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
@@ -94,7 +86,7 @@ export default async function ProductPage({
               id: String(product._id),
               name: product.name,
               price: product.price,
-              image: product.image,
+              image: images[0],
             }}
             sizes={sizes}
             stock={product.stock}

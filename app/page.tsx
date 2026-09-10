@@ -53,7 +53,7 @@ export default async function Home() {
             className="focus-visible:ring-ring rounded-xl focus-visible:ring-2 focus-visible:outline-none"
           >
             <Card className="hover:border-brand group h-full overflow-hidden pt-0 transition-colors">
-              <div className="bg-muted text-muted-foreground relative flex h-48 items-center justify-center overflow-hidden">
+              <div className="bg-muted text-muted-foreground relative flex h-56 items-center justify-center overflow-hidden p-4">
                 <span
                   className="brand-rule absolute inset-x-0 top-0 h-1 origin-left scale-x-0 transition-transform group-hover:scale-x-100"
                   aria-hidden
@@ -63,7 +63,7 @@ export default async function Home() {
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="h-full w-full object-cover"
+                    className="max-h-full max-w-full object-contain"
                   />
                 ) : (
                   <span className="text-sm">Nema slike</span>

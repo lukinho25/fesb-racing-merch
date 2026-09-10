@@ -58,13 +58,13 @@ export default async function AdminPage() {
           {products.map((product) => (
             <li key={String(product._id)}>
               <Card className="flex flex-row items-center gap-4 p-3">
-                <div className="bg-muted flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded">
+                <div className="bg-muted flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded p-1">
                   {product.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={product.image}
                       alt={product.name}
-                      className="h-full w-full object-cover"
+                      className="max-h-full max-w-full object-contain"
                     />
                   ) : (
                     <span className="text-muted-foreground text-[10px]">

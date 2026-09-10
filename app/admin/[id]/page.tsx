@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
 import { updateProduct } from '@/app/actions/products';
+import { productImages } from '@/lib/products';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductForm from '../product-form';
@@ -45,7 +46,7 @@ export default async function EditProductPage({
               name: product.name,
               description: product.description,
               price: product.price,
-              image: product.image,
+              images: productImages(product),
               sizes: product.sizes,
               category: product.category,
               stock: product.stock,

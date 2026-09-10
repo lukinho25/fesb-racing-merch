@@ -29,13 +29,13 @@ export default function CartPage() {
               key={`${item.id}-${item.size ?? ''}`}
               className="flex flex-row items-center gap-4 p-3"
             >
-              <div className="bg-muted h-16 w-16 shrink-0 overflow-hidden rounded">
+              <div className="bg-muted flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded p-1">
                 {item.image && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.image}
                     alt={item.name}
-                    className="h-full w-full object-cover"
+                    className="max-h-full max-w-full object-contain"
                   />
                 )}
               </div>

@@ -18,7 +18,7 @@ export type ProductValues = {
   name?: string;
   description?: string;
   price?: number;
-  image?: string;
+  images?: string[];
   sizes?: string[];
   category?: string;
   stock?: number;
@@ -34,6 +34,7 @@ export default function ProductForm({
   submitLabel?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, undefined);
+  const existing = product?.images ?? [];
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -105,30 +106,64 @@ export default function ProductForm({
         <p className="text-xs text-muted-foreground">Odvoji zarezom.</p>
       </div>
 
+      {existing.length > 0 && (
+        <div className="grid gap-2">
+          <Label>Slike proizvoda</Label>
+          <div className="flex flex-wrap gap-4">
+            {existing.map((url, index) => (
+              <div key={url} className="flex w-28 flex-col gap-1">
+                <div className="bg-muted flex h-28 items-center justify-center overflow-hidden rounded border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt=""
+                    className="max-h-full max-w-full object-contain"
+                  />
+                </div>
+                <label className="flex items-center gap-1 text-xs">
+                  <input
+                    type="radio"
+                    name="mainImage"
+                    value={url}
+                    defaultChecked={index === 0}
+                  />
+                  Glavna
+                </label>
+                <label className="text-destructive flex items-center gap-1 text-xs">
+                  <input type="checkbox" name="removeImages" value={url} />
+                  Ukloni
+                </label>
+              </div>
+            ))}
+          </div>
+          <p className="text-muted-foreground text-xs">
+            Glavna slika se prikazuje u katalogu. Uklonjene se brišu tek kad
+            spremiš.
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="image">Slika (datoteka)</Label>
-          <Input id="image" name="image" type="file" accept="image/*" />
+          <Label htmlFor="images">
+            {existing.length > 0 ? 'Dodaj još slika' : 'Slike (datoteke)'}
+          </Label>
+          <Input
+            id="images"
+            name="images"
+            type="file"
+            accept="image/*"
+            multiple
+          />
+          <p className="text-muted-foreground text-xs">
+            Možeš odabrati više datoteka odjednom.
+          </p>
         </div>
         <div className="grid gap-2">
           <Label htmlFor="imageUrl">ili adresa slike</Label>
           <Input id="imageUrl" name="imageUrl" placeholder="https://..." />
         </div>
       </div>
-
-      {product?.image && (
-        <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.image}
-            alt={product.name ?? ''}
-            className="h-16 w-16 rounded border object-cover"
-          />
-          <p className="text-xs text-muted-foreground">
-            Trenutna slika. Ostane ista ako ne odabereš novu.
-          </p>
-        </div>
-      )}
 
       {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
       {state?.success && (

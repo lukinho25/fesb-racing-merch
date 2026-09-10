@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache';
 import { connectDB } from '@/lib/mongodb';
 import { requireAdmin } from '@/lib/auth';
-import { deleteImage, saveImage } from '@/lib/upload';
+import { deleteImage, saveImages } from '@/lib/upload';
 import Product from '@/models/Product';
+import { productImages } from '@/lib/products';
 
 function parseSizes(value) {
   if (typeof value !== 'string') return [];
@@ -46,11 +47,13 @@ export async function createProduct(_prevState, formData) {
   if (error) return { error };
 
   try {
-    const image = await saveImage(formData.get('image'));
+    const uploaded = await saveImages(formData.getAll('images'));
     const imageUrl = String(formData.get('imageUrl') ?? '').trim();
+    // Prva slika je glavna: ona se vidi u katalogu.
+    const images = [...uploaded, ...(imageUrl ? [imageUrl] : [])];
 
     await connectDB();
-    await Product.create({ ...data, image: image ?? imageUrl });
+    await Product.create({ ...data, images, image: images[0] ?? '' });
   } catch (err) {
     return { error: err.message ?? 'Spremanje proizvoda nije uspjelo.' };
   }
@@ -70,17 +73,31 @@ export async function updateProduct(_prevState, formData) {
   if (error) return { error };
 
   try {
-    const image = await saveImage(formData.get('image'));
-    const imageUrl = String(formData.get('imageUrl') ?? '').trim();
-    const update = { ...data };
-
-    // Sliku mijenjamo samo ako je poslana nova datoteka ili nova adresa.
-    if (image) update.image = image;
-    else if (imageUrl) update.image = imageUrl;
-
     await connectDB();
-    const updated = await Product.findByIdAndUpdate(id, update);
-    if (!updated) return { error: 'Proizvod nije pronađen.' };
+    const existing = await Product.findById(id).lean();
+    if (!existing) return { error: 'Proizvod nije pronađen.' };
+
+    const removed = new Set(formData.getAll('removeImages').map(String));
+    const kept = productImages(existing).filter((url) => !removed.has(url));
+
+    const uploaded = await saveImages(formData.getAll('images'));
+    const imageUrl = String(formData.get('imageUrl') ?? '').trim();
+    const all = [...kept, ...uploaded, ...(imageUrl ? [imageUrl] : [])];
+
+    // Glavna ide na prvo mjesto; ako je obrisana, glavna postaje prva preostala.
+    const chosenMain = String(formData.get('mainImage') ?? '');
+    const images = all.includes(chosenMain)
+      ? [chosenMain, ...all.filter((url) => url !== chosenMain)]
+      : all;
+
+    await Product.findByIdAndUpdate(id, {
+      ...data,
+      images,
+      image: images[0] ?? '',
+    });
+
+    // Datoteke brisemo tek kad je zapis spremljen.
+    for (const url of removed) await deleteImage(url);
   } catch (err) {
     return { error: err.message ?? 'Spremanje izmjena nije uspjelo.' };
   }
@@ -99,7 +116,9 @@ export async function deleteProduct(formData) {
 
   await connectDB();
   const deleted = await Product.findByIdAndDelete(id);
-  await deleteImage(deleted?.image);
+  if (deleted) {
+    for (const url of productImages(deleted)) await deleteImage(url);
+  }
 
   revalidatePath('/');
   revalidatePath('/admin');
