@@ -31,7 +31,6 @@ export default async function OrdersPage() {
 
   await connectDB();
   const orders = await Order.find({}).sort({ createdAt: -1 }).lean();
-  const newCount = orders.filter((order) => order.status === 'nova').length;
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-10">
@@ -46,10 +45,6 @@ export default async function OrdersPage() {
         <p className="text-muted-foreground">Još nema narudžbi.</p>
       ) : (
         <>
-          <p className="text-muted-foreground mb-4 text-sm">
-            Ukupno {orders.length}, novih {newCount}.
-          </p>
-
           <ul className="flex flex-col gap-4">
             {orders.map((order) => (
               <li key={String(order._id)}>
