@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import Order from '@/models/Order';
-import { deleteOrder, updateOrderStatus } from '@/app/actions/orders';
+import { deleteOrder } from '@/app/actions/orders';
+import StatusButton from '@/components/status-button';
 import ConfirmSubmit from '@/components/confirm-submit';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -113,23 +114,13 @@ export default async function OrdersPage() {
 
                     <div className="flex flex-wrap items-center gap-2 pt-2">
                       {NEXT_STATUSES[order.status]?.map((status) => (
-                        <form key={status} action={updateOrderStatus}>
-                          <input
-                            type="hidden"
-                            name="id"
-                            value={String(order._id)}
-                          />
-                          <input type="hidden" name="status" value={status} />
-                          <Button
-                            type="submit"
-                            size="sm"
-                            variant={
-                              status === 'otkazana' ? 'outline' : 'default'
-                            }
-                          >
-                            Označi kao {STATUS_LABELS[status].toLowerCase()}
-                          </Button>
-                        </form>
+                        <StatusButton
+                          key={status}
+                          orderId={String(order._id)}
+                          status={status}
+                          variant={status === 'otkazana' ? 'outline' : 'default'}
+                          label={`Označi kao ${STATUS_LABELS[status].toLowerCase()}`}
+                        />
                       ))}
 
                       {/* Gotove narudzbe se smiju maknuti; nove i potvrdene ne. */}
@@ -147,6 +138,12 @@ export default async function OrdersPage() {
                         </form>
                       )}
                     </div>
+
+                    <p className="text-muted-foreground text-xs">
+                      {order.status === 'otkazana'
+                        ? 'Zaliha je vraćena na stanje.'
+                        : 'Otkazivanje vraća naručene komade na stanje.'}
+                    </p>
                   </CardContent>
                 </Card>
               </li>

@@ -59,6 +59,23 @@ function readCartLines(formData) {
   return { lines };
 }
 
+/** Proizvod s veličinama skida zalihu te veličine, ostali samo ukupnu. */
+function hasVariants(line, byId) {
+  return Boolean(line.size && byId.get(line.id)?.variants?.length);
+}
+
+/** Vraća zalihu jedne stavke na stanje. */
+async function releaseLine(line, byId) {
+  if (hasVariants(line, byId)) {
+    await Product.updateOne(
+      { _id: line.id, 'variants.size': line.size },
+      { $inc: { 'variants.$.stock': line.quantity, stock: line.quantity } }
+    );
+  } else {
+    await Product.updateOne({ _id: line.id }, { $inc: { stock: line.quantity } });
+  }
+}
+
 /**
  * Skida zalihu samo ako je stvarno ima. Uvjet u upitu i $inc su jedna
  * atomarna operacija, pa dvije istovremene narudžbe ne mogu obje proći
@@ -67,27 +84,8 @@ function readCartLines(formData) {
 async function reserveStock(lines, byId) {
   const reserved = [];
 
-  /** Proizvod s veličinama skida zalihu te veličine, ostali samo ukupnu. */
-  function hasVariants(line) {
-    return Boolean(line.size && byId.get(line.id)?.variants?.length);
-  }
-
-  async function release(line) {
-    if (hasVariants(line)) {
-      await Product.updateOne(
-        { _id: line.id, 'variants.size': line.size },
-        { $inc: { 'variants.$.stock': line.quantity, stock: line.quantity } }
-      );
-    } else {
-      await Product.updateOne(
-        { _id: line.id },
-        { $inc: { stock: line.quantity } }
-      );
-    }
-  }
-
   for (const line of lines) {
-    const result = hasVariants(line)
+    const result = hasVariants(line, byId)
       ? await Product.updateOne(
           {
             _id: line.id,
@@ -104,7 +102,7 @@ async function reserveStock(lines, byId) {
 
     if (result.modifiedCount !== 1) {
       // Vrati sve što je ova narudžba već skinula pa odustani.
-      for (const done of reserved) await release(done);
+      for (const done of reserved) await releaseLine(done, byId);
       return { failed: line };
     }
 
@@ -112,6 +110,23 @@ async function reserveStock(lines, byId) {
   }
 
   return { reserved };
+}
+
+/** Stavke narudžbe u obliku koji razumiju reserveStock i releaseLine. */
+function orderLines(order) {
+  return order.items.map((item) => ({
+    id: String(item.product),
+    size: item.size,
+    quantity: item.quantity,
+  }));
+}
+
+/** Proizvodi tih stavki, po id-u, da znamo idu li kroz varijante. */
+async function productsForLines(lines) {
+  const products = await Product.find({
+    _id: { $in: lines.map((line) => line.id) },
+  }).lean();
+  return new Map(products.map((product) => [String(product._id), product]));
 }
 
 export async function createOrder(_prevState, formData) {
@@ -161,19 +176,7 @@ export async function createOrder(_prevState, formData) {
     order = await Order.create({ ...customer, items, total });
   } catch (err) {
     // Zaliha je vec skinuta, a narudzbe nema - vrati je da ne nestane niotkuda.
-    for (const line of lines) {
-      if (line.size && byId.get(line.id)?.variants?.length) {
-        await Product.updateOne(
-          { _id: line.id, 'variants.size': line.size },
-          { $inc: { 'variants.$.stock': line.quantity, stock: line.quantity } }
-        );
-      } else {
-        await Product.updateOne(
-          { _id: line.id },
-          { $inc: { stock: line.quantity } }
-        );
-      }
-    }
+    for (const line of lines) await releaseLine(line, byId);
     console.error('Spremanje narudžbe nije uspjelo:', err);
     return { error: 'Narudžba nije spremljena. Pokušaj ponovno.' };
   }
@@ -187,16 +190,51 @@ export async function createOrder(_prevState, formData) {
   redirect(`/narudzba/${order._id}`);
 }
 
-export async function updateOrderStatus(formData) {
+/**
+ * Mijenja status narudžbe i uz to vodi računa o zalihi:
+ * otkazivanje vraća komade na stanje, a ponovno otvaranje otkazane
+ * narudžbe ih mora skinuti natrag - ako ih u međuvremenu nema, status
+ * ostaje neizmijenjen umjesto da zaliha padne u minus.
+ */
+export async function updateOrderStatus(_prevState, formData) {
   await requireAdmin();
 
   const id = String(formData.get('id') ?? '');
   const status = String(formData.get('status') ?? '');
-  if (!id || !['nova', 'potvrdena', 'preuzeta', 'otkazana'].includes(status)) return;
+  if (!id || !['nova', 'potvrdena', 'preuzeta', 'otkazana'].includes(status)) {
+    return { error: 'Neispravan zahtjev.' };
+  }
 
   await connectDB();
-  await Order.findByIdAndUpdate(id, { status });
+  const order = await Order.findById(id).lean();
+  if (!order) return { error: 'Narudžba nije pronađena.' };
+  if (order.status === status) return;
 
+  const lines = orderLines(order);
+  const byId = await productsForLines(lines);
+  let stockReturned = Boolean(order.stockReturned);
+
+  if (status === 'otkazana' && !stockReturned) {
+    for (const line of lines) await releaseLine(line, byId);
+    stockReturned = true;
+  } else if (status !== 'otkazana' && stockReturned) {
+    const { failed } = await reserveStock(lines, byId);
+    if (failed) {
+      const product = byId.get(failed.id);
+      const what = failed.size
+        ? `${product?.name ?? 'Proizvod'} (${failed.size})`
+        : (product?.name ?? 'Proizvod');
+      return {
+        error: `Nema dovoljno zalihe za ${what}, pa narudžba ostaje otkazana.`,
+      };
+    }
+    stockReturned = false;
+  }
+
+  await Order.findByIdAndUpdate(id, { status, stockReturned });
+
+  revalidatePath('/');
+  revalidatePath('/admin');
   revalidatePath('/admin/narudzbe');
 }
 

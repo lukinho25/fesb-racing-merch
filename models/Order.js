@@ -27,6 +27,9 @@ const OrderSchema = new mongoose.Schema(
       enum: ['nova', 'potvrdena', 'preuzeta', 'otkazana'],
       default: 'nova',
     },
+    // Je li zaliha ove narudžbe vraćena na stanje (otkazivanjem). Sprječava
+    // dvostruko vraćanje i zna da kod ponovnog otvaranja treba skinuti opet.
+    stockReturned: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
