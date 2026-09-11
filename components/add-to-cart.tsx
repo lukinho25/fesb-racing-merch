@@ -18,7 +18,9 @@ export default function AddToCart({
 }) {
   const { addItem, items } = useCart();
   const [size, setSize] = useState<string | undefined>(sizes[0]);
-  const [quantity, setQuantity] = useState(1);
+  // Drzimo upisani tekst, ne broj: inace se jedinica ne moze obrisati pa se
+  // dvoznamenkasta kolicina uopce ne moze utipkati.
+  const [quantityText, setQuantityText] = useState('1');
   const [added, setAdded] = useState(false);
 
   // Vec u kosarici za ovu velicinu - vise od zalihe ne pustamo ni zbrojeno.
@@ -27,6 +29,12 @@ export default function AddToCart({
       (line) => line.id === product.id && (line.size ?? '') === (size ?? '')
     )?.quantity ?? 0;
   const remaining = Math.max(0, stock - inCart);
+
+  const typed = Number.parseInt(quantityText, 10);
+  const quantity = Math.min(
+    Math.max(Number.isFinite(typed) ? typed : 1, 1),
+    Math.max(remaining, 1)
+  );
 
   if (stock <= 0) {
     return (
@@ -58,20 +66,25 @@ export default function AddToCart({
         </div>
       )}
 
-      <div className="grid w-24 gap-2">
+      <div className="grid gap-2">
         <Label htmlFor="quantity">Količina</Label>
         <Input
           id="quantity"
           type="number"
+          inputMode="numeric"
           min={1}
-          max={stock}
-          value={quantity}
-          onChange={(event) =>
-            setQuantity(
-              Math.min(stock, Math.max(1, Number(event.target.value) || 1))
-            )
-          }
+          max={remaining}
+          className="w-24"
+          value={quantityText}
+          // Dok tipka, sve prolazi - i prazno polje. Slazemo tek na izlasku.
+          onChange={(event) => setQuantityText(event.target.value)}
+          onBlur={() => setQuantityText(String(quantity))}
         />
+        {typed > remaining && (
+          <p className="text-muted-foreground text-xs">
+            Na zalihi je {remaining}, pa toliko i dodajemo.
+          </p>
+        )}
       </div>
 
       <div className="flex items-center gap-3">
@@ -79,7 +92,8 @@ export default function AddToCart({
           type="button"
           disabled={remaining === 0}
           onClick={() => {
-            addItem({ ...product, size, stock }, Math.min(quantity, remaining));
+            addItem({ ...product, size, stock }, quantity);
+            setQuantityText(String(quantity));
             setAdded(true);
           }}
         >

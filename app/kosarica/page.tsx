@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useCart } from '@/components/cart';
+import CartQuantity from '@/components/cart-quantity';
 
 export default function CartPage() {
   const { items, total, setQuantity, removeItem, clear } = useCart();
@@ -63,9 +64,13 @@ export default function CartPage() {
                 >
                   −
                 </Button>
-                <span className="w-8 text-center tabular-nums">
-                  {item.quantity}
-                </span>
+                <CartQuantity
+                  quantity={item.quantity}
+                  stock={item.stock}
+                  onChange={(quantity) =>
+                    setQuantity(item.id, item.size, quantity)
+                  }
+                />
                 <Button
                   variant="outline"
                   size="icon"
