@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import SizeStockEditor, { type Variant } from '@/components/size-stock-editor';
 
 type ProductFormState = { error?: string; success?: string } | undefined;
 
@@ -19,7 +20,7 @@ export type ProductValues = {
   description?: string;
   price?: number;
   images?: string[];
-  sizes?: string[];
+  variants?: Variant[];
   category?: string;
   stock?: number;
 };
@@ -61,7 +62,7 @@ export default function ProductForm({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="price">Cijena (€) *</Label>
           <Input
@@ -75,16 +76,6 @@ export default function ProductForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="stock">Zaliha</Label>
-          <Input
-            id="stock"
-            name="stock"
-            type="number"
-            min="0"
-            defaultValue={product?.stock ?? 0}
-          />
-        </div>
-        <div className="grid gap-2">
           <Label htmlFor="category">Kategorija</Label>
           <Input
             id="category"
@@ -95,16 +86,7 @@ export default function ProductForm({
         </div>
       </div>
 
-      <div className="grid gap-2">
-        <Label htmlFor="sizes">Veličine</Label>
-        <Input
-          id="sizes"
-          name="sizes"
-          defaultValue={product?.sizes?.join(', ')}
-          placeholder="S, M, L, XL"
-        />
-        <p className="text-xs text-muted-foreground">Odvoji zarezom.</p>
-      </div>
+      <SizeStockEditor variants={product?.variants} stock={product?.stock} />
 
       {existing.length > 0 && (
         <div className="grid gap-2">

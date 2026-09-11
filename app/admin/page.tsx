@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
+import { productVariants, totalStock } from '@/lib/products';
 import { createProduct, deleteProduct } from '@/app/actions/products';
 import { logout } from '@/app/actions/auth';
 import { Badge } from '@/components/ui/badge';
@@ -76,15 +77,21 @@ export default async function AdminPage() {
                 <div className="min-w-0 grow">
                   <p className="truncate font-medium">{product.name}</p>
                   <p className="text-muted-foreground text-sm">
-                    {product.price} € · zaliha {product.stock}
+                    {product.price} € · ukupno {totalStock(product)} kom
                   </p>
-                  {product.sizes?.length > 0 && (
+                  {productVariants(product).length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
-                      {product.sizes.map((size: string) => (
-                        <Badge key={size} variant="secondary">
-                          {size}
-                        </Badge>
-                      ))}
+                      {productVariants(product).map(
+                        (variant: { size: string; stock: number }) => (
+                          <Badge
+                            key={variant.size}
+                            variant={variant.stock > 0 ? 'secondary' : 'outline'}
+                            className={variant.stock === 0 ? 'opacity-60' : ''}
+                          >
+                            {variant.size}: {variant.stock}
+                          </Badge>
+                        )
+                      )}
                     </div>
                   )}
                 </div>

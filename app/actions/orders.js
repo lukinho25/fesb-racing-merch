@@ -7,6 +7,7 @@ import { requireAdmin } from '@/lib/auth';
 import { notifyNewOrder } from '@/lib/notify';
 import Order from '@/models/Order';
 import Product from '@/models/Product';
+import { stockForSize } from '@/lib/products';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -63,21 +64,48 @@ function readCartLines(formData) {
  * atomarna operacija, pa dvije istovremene narudžbe ne mogu obje proći
  * kroz istu zadnju majicu.
  */
-async function reserveStock(lines) {
+async function reserveStock(lines, byId) {
   const reserved = [];
 
+  /** Proizvod s veličinama skida zalihu te veličine, ostali samo ukupnu. */
+  function hasVariants(line) {
+    return Boolean(line.size && byId.get(line.id)?.variants?.length);
+  }
+
+  async function release(line) {
+    if (hasVariants(line)) {
+      await Product.updateOne(
+        { _id: line.id, 'variants.size': line.size },
+        { $inc: { 'variants.$.stock': line.quantity, stock: line.quantity } }
+      );
+    } else {
+      await Product.updateOne(
+        { _id: line.id },
+        { $inc: { stock: line.quantity } }
+      );
+    }
+  }
+
   for (const line of lines) {
-    const result = await Product.updateOne(
-      { _id: line.id, stock: { $gte: line.quantity } },
-      { $inc: { stock: -line.quantity } }
-    );
+    const result = hasVariants(line)
+      ? await Product.updateOne(
+          {
+            _id: line.id,
+            variants: {
+              $elemMatch: { size: line.size, stock: { $gte: line.quantity } },
+            },
+          },
+          { $inc: { 'variants.$.stock': -line.quantity, stock: -line.quantity } }
+        )
+      : await Product.updateOne(
+          { _id: line.id, stock: { $gte: line.quantity } },
+          { $inc: { stock: -line.quantity } }
+        );
 
     if (result.modifiedCount !== 1) {
       // Vrati sve što je ova narudžba već skinula pa odustani.
-      for (const done of reserved) {
-        await Product.updateOne({ _id: done.id }, { $inc: { stock: done.quantity } });
-      }
-      return { error: null, failed: line };
+      for (const done of reserved) await release(done);
+      return { failed: line };
     }
 
     reserved.push(line);
@@ -105,11 +133,13 @@ export async function createOrder(_prevState, formData) {
     }
   }
 
-  const { failed } = await reserveStock(lines);
+  const { failed } = await reserveStock(lines, byId);
   if (failed) {
     const product = byId.get(failed.id);
+    const available = stockForSize(product, failed.size);
+    const what = failed.size ? `"${product.name}" (${failed.size})` : `"${product.name}"`;
     return {
-      error: `"${product.name}" nema dovoljno na zalihi (traženo ${failed.quantity}, dostupno ${product.stock}). Smanji količinu.`,
+      error: `${what} nema dovoljno na zalihi (traženo ${failed.quantity}, dostupno ${available}). Smanji količinu.`,
     };
   }
 
@@ -132,7 +162,17 @@ export async function createOrder(_prevState, formData) {
   } catch (err) {
     // Zaliha je vec skinuta, a narudzbe nema - vrati je da ne nestane niotkuda.
     for (const line of lines) {
-      await Product.updateOne({ _id: line.id }, { $inc: { stock: line.quantity } });
+      if (line.size && byId.get(line.id)?.variants?.length) {
+        await Product.updateOne(
+          { _id: line.id, 'variants.size': line.size },
+          { $inc: { 'variants.$.stock': line.quantity, stock: line.quantity } }
+        );
+      } else {
+        await Product.updateOne(
+          { _id: line.id },
+          { $inc: { stock: line.quantity } }
+        );
+      }
     }
     console.error('Spremanje narudžbe nije uspjelo:', err);
     return { error: 'Narudžba nije spremljena. Pokušaj ponovno.' };

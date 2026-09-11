@@ -9,22 +9,38 @@ import { productImages } from '@/lib/products';
 
 function parseSizes(value) {
   if (typeof value !== 'string') return [];
-  return value
-    .split(',')
-    .map((size) => size.trim().toUpperCase())
-    .filter(Boolean);
+  const seen = new Set();
+  for (const part of value.split(',')) {
+    const size = part.trim().toUpperCase();
+    if (size) seen.add(size);
+  }
+  return [...seen];
 }
 
 function readForm(formData) {
   const name = String(formData.get('name') ?? '').trim();
   const price = Number(formData.get('price'));
-  const stock = Number(formData.get('stock') ?? 0);
+  const sizes = parseSizes(formData.get('sizes'));
 
   if (!name) return { error: 'Naziv proizvoda je obavezan.' };
   if (!Number.isFinite(price) || price < 0) {
     return { error: 'Cijena mora biti broj veći ili jednak 0.' };
   }
-  if (!Number.isFinite(stock) || stock < 0) {
+
+  // Sa veličinama zaliha dolazi po veličini (stock_S, stock_M...), bez njih
+  // je jedan broj. Ukupna zaliha je uvijek zbroj, pa katalog i dalje zna
+  // je li proizvod rasprodan.
+  const variants = [];
+  for (const size of sizes) {
+    const stock = Number(formData.get(`stock_${size}`) ?? 0);
+    if (!Number.isFinite(stock) || stock < 0) {
+      return { error: `Zaliha za veličinu ${size} mora biti broj 0 ili veći.` };
+    }
+    variants.push({ size, stock });
+  }
+
+  const plainStock = Number(formData.get('stock') ?? 0);
+  if (sizes.length === 0 && (!Number.isFinite(plainStock) || plainStock < 0)) {
     return { error: 'Zaliha mora biti broj veći ili jednak 0.' };
   }
 
@@ -32,10 +48,13 @@ function readForm(formData) {
     data: {
       name,
       price,
-      stock,
+      sizes,
+      variants,
+      stock: sizes.length
+        ? variants.reduce((sum, variant) => sum + variant.stock, 0)
+        : plainStock,
       description: String(formData.get('description') ?? '').trim(),
       category: String(formData.get('category') ?? '').trim(),
-      sizes: parseSizes(formData.get('sizes')),
     },
   };
 }

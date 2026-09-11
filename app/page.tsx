@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
+import { productVariants, totalStock } from '@/lib/products';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -80,13 +81,24 @@ export default async function Home() {
                     {product.description}
                   </p>
                 )}
-                {product.sizes?.length > 0 && (
+                {productVariants(product).length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {product.sizes.map((size: string) => (
-                      <Badge key={size} variant="outline">
-                        {size}
-                      </Badge>
-                    ))}
+                    {productVariants(product).map(
+                      (variant: { size: string; stock: number }) => (
+                        <Badge
+                          key={variant.size}
+                          variant="outline"
+                          // Rasprodane velicine ostaju vidljive, ali prigusene.
+                          className={
+                            variant.stock === 0
+                              ? 'text-muted-foreground line-through opacity-60'
+                              : ''
+                          }
+                        >
+                          {variant.size}
+                        </Badge>
+                      )
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -95,7 +107,7 @@ export default async function Home() {
                 <span className="text-brand text-lg font-bold">
                   {product.price} €
                 </span>
-                {product.stock === 0 && (
+                {totalStock(product) === 0 && (
                   <Badge variant="secondary">Rasprodano</Badge>
                 )}
               </CardFooter>

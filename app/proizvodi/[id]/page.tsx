@@ -4,7 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
 import AddToCart from '@/components/add-to-cart';
 import ProductGallery from '@/components/product-gallery';
-import { productImages } from '@/lib/products';
+import { productImages, productVariants, totalStock } from '@/lib/products';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -42,8 +42,9 @@ export default async function ProductPage({
   const product = await getProduct(id);
   if (!product) notFound();
 
-  const sizes: string[] = product.sizes ?? [];
   const images = productImages(product);
+  const variants = productVariants(product);
+  const stock = totalStock(product);
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-10">
@@ -64,9 +65,9 @@ export default async function ProductPage({
             <h1 className="text-3xl font-bold">{product.name}</h1>
             <div className="brand-rule h-1 w-16 rounded-full" aria-hidden />
             <p className="text-brand text-3xl font-bold">{product.price} €</p>
-            {product.stock > 0 ? (
+            {stock > 0 ? (
               <Badge variant="secondary" className="w-fit">
-                Na zalihi: {product.stock}
+                Na zalihi: {stock}
               </Badge>
             ) : (
               <Badge variant="outline" className="w-fit">
@@ -88,8 +89,8 @@ export default async function ProductPage({
               price: product.price,
               image: images[0],
             }}
-            sizes={sizes}
-            stock={product.stock}
+            variants={variants}
+            stock={stock}
           />
         </div>
       </div>

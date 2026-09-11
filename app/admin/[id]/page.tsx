@@ -4,7 +4,11 @@ import { requireAdmin } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import Product from '@/models/Product';
 import { updateProduct } from '@/app/actions/products';
-import { productImages } from '@/lib/products';
+import {
+  editableVariants,
+  needsVariantStock,
+  productImages,
+} from '@/lib/products';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductForm from '../product-form';
@@ -38,6 +42,13 @@ export default async function EditProductPage({
           <CardTitle>Uredi proizvod</CardTitle>
         </CardHeader>
         <CardContent>
+          {needsVariantStock(product) && (
+            <p className="mb-4 rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+              Ovaj proizvod još ima samo zbirnu zalihu ({product.stock} kom).
+              Upiši koliko ih ima po veličini — zbroj postaje nova ukupna
+              zaliha.
+            </p>
+          )}
           <ProductForm
             action={updateProduct}
             submitLabel="Spremi izmjene"
@@ -47,7 +58,7 @@ export default async function EditProductPage({
               description: product.description,
               price: product.price,
               images: productImages(product),
-              sizes: product.sizes,
+              variants: editableVariants(product),
               category: product.category,
               stock: product.stock,
             }}
