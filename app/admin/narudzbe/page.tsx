@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { requireAdmin } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import Order from '@/models/Order';
-import { updateOrderStatus } from '@/app/actions/orders';
+import { deleteOrder, updateOrderStatus } from '@/app/actions/orders';
+import ConfirmSubmit from '@/components/confirm-submit';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +18,9 @@ const STATUS_LABELS: Record<string, string> = {
   preuzeta: 'Preuzeta',
   otkazana: 'Otkazana',
 };
+
+/** Gotove narudžbe: samo se one smiju obrisati, i to ručno. */
+const DELETABLE = ['preuzeta', 'otkazana'];
 
 /** Sljedeći koraci koje nudimo za trenutni status. */
 const NEXT_STATUSES: Record<string, string[]> = {
@@ -107,29 +111,42 @@ export default async function OrdersPage() {
                       </p>
                     )}
 
-                    {NEXT_STATUSES[order.status]?.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        {NEXT_STATUSES[order.status].map((status) => (
-                          <form key={status} action={updateOrderStatus}>
-                            <input
-                              type="hidden"
-                              name="id"
-                              value={String(order._id)}
-                            />
-                            <input type="hidden" name="status" value={status} />
-                            <Button
-                              type="submit"
-                              size="sm"
-                              variant={
-                                status === 'otkazana' ? 'outline' : 'default'
-                              }
-                            >
-                              Označi kao {STATUS_LABELS[status].toLowerCase()}
-                            </Button>
-                          </form>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2 pt-2">
+                      {NEXT_STATUSES[order.status]?.map((status) => (
+                        <form key={status} action={updateOrderStatus}>
+                          <input
+                            type="hidden"
+                            name="id"
+                            value={String(order._id)}
+                          />
+                          <input type="hidden" name="status" value={status} />
+                          <Button
+                            type="submit"
+                            size="sm"
+                            variant={
+                              status === 'otkazana' ? 'outline' : 'default'
+                            }
+                          >
+                            Označi kao {STATUS_LABELS[status].toLowerCase()}
+                          </Button>
+                        </form>
+                      ))}
+
+                      {/* Gotove narudzbe se smiju maknuti; nove i potvrdene ne. */}
+                      {DELETABLE.includes(order.status) && (
+                        <form action={deleteOrder} className="ml-auto">
+                          <input
+                            type="hidden"
+                            name="id"
+                            value={String(order._id)}
+                          />
+                          <ConfirmSubmit
+                            label="Obriši narudžbu"
+                            confirmLabel="Potvrdi brisanje"
+                          />
+                        </form>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </li>

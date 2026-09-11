@@ -199,3 +199,27 @@ export async function updateOrderStatus(formData) {
 
   revalidatePath('/admin/narudzbe');
 }
+
+/**
+ * Briše gotovu narudžbu. Nove i potvrđene ostaju - njih se prvo zatvori
+ * (preuzeta ili otkazana), pa tek onda može nestati iz popisa.
+ */
+export async function deleteOrder(formData) {
+  await requireAdmin();
+
+  const id = String(formData.get('id') ?? '');
+  if (!id) return;
+
+  await connectDB();
+  const order = await Order.findById(id).lean();
+  if (!order) return;
+
+  // Do ovdje se preko sucelja ne moze doci; gumb se nudi samo za gotove.
+  if (!['preuzeta', 'otkazana'].includes(order.status)) {
+    console.error('Odbijeno brisanje narudžbe koja nije gotova:', id);
+    return;
+  }
+
+  await Order.findByIdAndDelete(id);
+  revalidatePath('/admin/narudzbe');
+}
